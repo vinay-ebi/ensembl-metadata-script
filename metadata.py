@@ -1,4 +1,5 @@
 import os
+import shutil 
 from typing import List, Optional
 from yarl import URL
 from uuid import UUID
@@ -57,6 +58,7 @@ class AnnotationSourceDAL():
         q = await self.db_session.execute(core_query)
         return q.scalars().all()
 
+
 async def get_annotations_source_async(core_dburl, dbname):
     core_url_conn_string = os.path.join(core_dburl, dbname)
     aysnc_mysession =  async_metadbsession(core_url_conn_string)
@@ -65,25 +67,7 @@ async def get_annotations_source_async(core_dburl, dbname):
             annotation_source_dal = AnnotationSourceDAL(session)
             core_metakeys = await annotation_source_dal.get_metakeys()
             return core_metakeys
-    
-  
-    
-    
-    # engine = create_async_engine(
-    #     url,
-    #     echo=True,
-    # )
-    
-    # async with engine.connect() as conn:
         
-    #     result = await conn.execute(resource_quey)
-
-    #     print(result.fetchall())
-
-    # # for AsyncEngine created in function scope, close and
-    # # clean-up pooled connections
-    # await engine.dispose()
-    
 
 def get_db_session(url ) :
     """Provide the DB session scope with context manager
@@ -134,7 +118,7 @@ def generate_metadata(metadata_params: MetadataParams):
         meta_query = select(Assembly.assembly_accession.label("assembly_accession"), Assembly.assembly_name,
                Organism.name, Organism.scientific_name, Organism.display_name, Organism.species_taxonomy_id, Organism.strain,
                Genome.genebuild, GenomeDatabase.dbname,GenomeDatabase.type, DataRelease.release_date).select_from(GenomeDatabase) \
-        .join(Genome).join(Assembly).join(Organism).join(DataRelease).join(Division) \
+         .join(Genome).join(Assembly).join(Organism).join(DataRelease).join(Division) \
         .filter(DataRelease.ensembl_version.in_( metadata_params.release_version) ) \
         .filter(DataRelease.ensembl_genomes_version.in_(metadata_params.rapid_version))
         
@@ -155,21 +139,80 @@ def generate_metadata(metadata_params: MetadataParams):
 
             yield species_info
         
- 
-def prepare_files_paths(species_info: dict, ftp_path: str) :
-    """_summary_
+
+def set_broken_symlink(dirname, data_type, annotation_source, script_path):
+    for name in os.listdir(dirname):
+        if name not in (os.curdir, os.pardir):
+            full = os.path.join(dirname, name)
+            if os.path.isdir(full) and not os.path.islink(full):
+                set_broken_symlink(full,data_type, annotation_source, script_path)
+            elif os.path.islink(full):
+
+                broken_symlink = os.readlink(full)
+                logger.info(f"Changing execution directory to {dirname} ")
+                os.chdir(dirname)
+                
+                if not os.path.exists(broken_symlink):
+                    try:
+                        logger.info(f"Setting Broken '{broken_symlink}' symlink for {name} ")
+                        join_sym_link = f"{annotation_source}/{data_type}"
+                        logger.info(f"Replacing  {broken_symlink} with {join_sym_link}")
+                        symlink = broken_symlink.replace(data_type, join_sym_link)
+                        symlink = f"../{symlink}"
+                        logger.info(f"Replacing  {broken_symlink} with {symlink}")
+                        logger.info(f"New symlink with annotation source : {symlink}")
+                        if os.path.exists(symlink) :
+                            logger.info(f"Target symlink exists {symlink} ")
+                            logger.info(f"Remove  existing Broken symlink  {full} ")
+                            os.remove(name)
+                            logger.info(f"setting Target symlink exists {symlink} ")
+                            os.symlink(symlink, name )
+                            logger.info(f"New Symlink for {name} valid status : {os.path.isabs(os.readlink(name))} ")
+                        else:
+                            logger.error(f"Target symlink Does not exists {symlink} ")
+                        
+                    except Exception as e:
+                        logger.info(f"Changing execution directory to {script_path}")
+                        logger.error(f"Failed to set the symlink for {dirname}/{name} : {str(e)} ")
+                        os.chdir(script_path)
+                
+                else:
+                    logger.info(f"Symlink {name} exists and Not broken")
+                    
+                logger.info(f"Changing execution directory to {script_path}")
+                os.chdir(script_path)
+                
+                
+                        
+        
+
+def move_subdir_paths(base_path: str, target_path: str) :
+    """Creates the subdir with annotation source and move the geneset dir 
 
     Args:
-        species_info (dict): _description_
-        ftp_path (str): _description_
+        base_path (str): annotation base path for dumps
+        target_path (str): target path with annotation source
+        check_symlink (boolean): check ofr symlink 
 
     Returns:
         _type_: _description_
-    """    
+    """
+    try:
+        #create new subdir name annotation source 
+        logger.info(f"Changing Subdir for  {base_path}  to  {target_path} ")    
+        if not os.path.exists(target_path):
+            logger.info(f"Creating new Subdir {target_path} ")
+            os.mkdir(target_path)
+        
+        #move geneset/genome/variation/rnaseq dumps to new subdir under annotation source
+        logger.info(f"Move Subdir form  {base_path}  to  {target_path} ")
+        shutil.move(base_path, target_path)
+            
+        return True
     
-    
-    return 'dbpaths'
-    
+    except Exception as e :
+        logger.error(f"Unable to move files {base_path}  to  {target_path} : {str(e)}")
+        raise ValueError(f"Unable to move files under annotation source {str(e)}")
 
         
 
