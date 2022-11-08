@@ -205,7 +205,8 @@ def move_subdir_paths(base_path: str, target_path: str) :
             os.mkdir(target_path)
         
         #move geneset/genome/variation/rnaseq dumps to new subdir under annotation source
-        logger.info(f"Move Subdir form  {base_path}  to  {target_path} ")
+        logger.info(f"Move Subdir form  {base_path}  to  {target_path} ")            
+             
         shutil.move(base_path, target_path)
             
         return True
@@ -214,6 +215,34 @@ def move_subdir_paths(base_path: str, target_path: str) :
         logger.error(f"Unable to move files {base_path}  to  {target_path} : {str(e)}")
         raise ValueError(f"Unable to move files under annotation source {str(e)}")
 
+
+def copy_subdir_paths(base_path: str, target_path: str) :
+    """Copy subdir with annotation source and remove the data_type dir in base path 
+
+    Args:
+        base_path (str): annotation base path for dumps
+        target_path (str): target path with annotation source
+
+    Returns:
+        _type_: _description_
+    """
+    try: 
+            
+        if os.path.exists(target_path):
+            logger.info(f"Copy Subdir form  {base_path}  to  {target_path} ")    
+            shutil.copytree(base_path, target_path)
+            # remove the base path from
+            logger.info(f"Copied Subdir  to  {target_path} ")
+            logger.info(f"Remove Base path    {base_path} ")
+            shutil.rmtree(base_path)            
+        else:
+            raise ValueError(f"No Target Directory  Found   {target_path} to copy ")
+                   
+        return True
+    
+    except Exception as e :
+        logger.error(f"Unable to copy files {base_path}  to  {target_path} : {str(e)}")
+        raise ValueError(f"Unable to copy files under annotation source {str(e)}")
         
 
     
