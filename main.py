@@ -50,7 +50,7 @@ if __name__ == "__main__":
                         help='species names ', )
     
     parser.add_argument('-t', '--data_type', action="extend", nargs="+", type=str,
-                        choices=['geneset', 'genome', 'rnaseq', 'variation'], 
+                        choices=['geneset', 'genome', 'rnaseq', 'variation' , 'statistics'], 
                         help='datatype subdir for ftp dumps'
                         )
     
@@ -88,27 +88,20 @@ if __name__ == "__main__":
                 timestamp_target_path = os.path.join(arguments.ftp_path, f"timestamped/species/{species_name}/{accession_name}/{core_metadata['species.annotation_source']}")
                 
                 subdir_paths = []
-                if os.path.exists(base_path) and not os.path.exists(target_path) :
+                if os.path.exists(base_path) :
                     logger.info("Target path Does not exists {target_path}")
                     logger.info("Moving Base dir {base_path} to new annotation source {target_path}")
                     subdir_paths.append( (base_path,  target_path) )
                     move_subdir_paths(base_path,  target_path )
-                elif os.path.exists(base_path) and os.path.exists(target_path):
-                    subdir_paths.append( (base_path,  target_path) )
-                    logger.info("Target path exists with annotation source_key {target_path}")
-                    copy_subdir_paths(base_path,  target_path )
+
                     
                                                     
                             
-                if os.path.exists(timestamp_base_path) and not os.path.exists(timestamp_target_path):
+                if os.path.exists(timestamp_base_path) :
                     
                     subdir_paths.append( (timestamp_base_path, timestamp_target_path))
                     move_subdir_paths(timestamp_base_path,  timestamp_target_path)
                 
-                elif os.path.exists(base_path) and os.path.exists(timestamp_target_path):
-                    subdir_paths.append( (base_path,  timestamp_target_path) )
-                    logger.info("Target path exists with annotation source_key {timestamp_target_path}")
-                    copy_subdir_paths(base_path,  timestamp_target_path )
 
                     
                 set_broken_symlink(target_path, data_type, core_metadata['species.annotation_source'], script_path)
