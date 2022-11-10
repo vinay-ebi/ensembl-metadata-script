@@ -51,6 +51,7 @@ if __name__ == "__main__":
     
     parser.add_argument('-t', '--data_type', action="extend", nargs="+", type=str,
                         choices=['geneset', 'genome', 'rnaseq', 'variation' , 'statistics'], 
+                        default=['geneset', 'genome', 'rnaseq', 'variation' , 'statistics'],
                         help='datatype subdir for ftp dumps'
                         )
     
