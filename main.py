@@ -85,8 +85,8 @@ if __name__ == "__main__":
             for data_type in arguments.data_type:
                 base_path = os.path.join(arguments.ftp_path, f"species/{species_name}/{accession_name}/{data_type}")
                 timestamp_base_path = os.path.join(arguments.ftp_path, f"timestamped/species/{species_name}/{accession_name}/{data_type}")
-                target_path = os.path.join(arguments.ftp_path, f"species/{species_name}/{accession_name}/{core_metadata['species.annotation_source']}") 
-                timestamp_target_path = os.path.join(arguments.ftp_path, f"timestamped/species/{species_name}/{accession_name}/{core_metadata['species.annotation_source']}")
+                target_path = os.path.join(arguments.ftp_path, f"species/{species_name}/{accession_name}/{core_metadata['species.annotation_source'].lower()}") 
+                timestamp_target_path = os.path.join(arguments.ftp_path, f"timestamped/species/{species_name}/{accession_name}/{core_metadata['species.annotation_source'].lower()}")
                 
                 subdir_paths = []
                 if os.path.exists(base_path) :
